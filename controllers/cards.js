@@ -56,7 +56,6 @@ module.exports.likeCard = (req, res) => {
       res.status(httpConstants.HTTP_STATUS_OK).send(card);
     })
     .catch((error) => {
-      console.log(error);
       if (error === 'CastError') {
         res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({ message: 'Некорректный ID' });
       }
