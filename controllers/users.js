@@ -18,7 +18,15 @@ module.exports.getUserById = (req, res) => {
       }
       return res.status(httpConstants.HTTP_STATUS_OK).send(user);
     })
-    .catch(() => res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Внутренняя ошибка сервера' }));
+    .catch((error) => {
+      if (error.name === 'ValidationError') {
+        res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
+          message: 'Некорректный id пользователя',
+        });
+        return;
+      }
+      res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ massage: 'Внутренняя ошибка сервера' });
+    });
 };
 
 // работает
