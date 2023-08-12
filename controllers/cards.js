@@ -34,11 +34,7 @@ module.exports.deleteCardById = (req, res) => {
       }
       res.status(httpConstants.HTTP_STATUS_OK).send(card);
     })
-    .catch((error) => {
-      if (error === 'CastError') {
-        res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({ message: 'Некорректный ID' });
-      }
-    });
+    .catch(() => res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({ message: 'Некорректный ID' }));
 };
 
 // работает
