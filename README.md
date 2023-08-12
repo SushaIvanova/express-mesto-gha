@@ -18,4 +18,4 @@
 
 ## Ссылка на репозиторий проекта
 
-https://github.com/yandex-praktikum/express-mesto-gha.git
+https://github.com/SushaIvanova/express-mesto-gha.git
