@@ -23,7 +23,6 @@ module.exports.getUserById = (req, res) => {
         res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
           message: 'Некорректный id пользователя',
         });
-        return;
       }
       res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ massage: 'Внутренняя ошибка сервера' });
     });

@@ -28,17 +28,15 @@ module.exports.createCard = (req, res) => {
 module.exports.deleteCardById = (req, res) => {
   Card.findByIdAndRemove(req.params.cardId)
     .then((card) => {
-      res.status(httpConstants.HTTP_STATUS_OK).send(card);
-    })
-    .catch((error) => {
-      if (error.name === 'ValidationError') {
+      if (!card) {
         res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({
           message: 'Карточка не найдена',
         });
         return;
       }
-      res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Внутренняя ошибка сервера' });
-    });
+      res.status(httpConstants.HTTP_STATUS_OK).send(card);
+    })
+    .catch(() => res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Внутренняя ошибка сервера' }));
 };
 
 // работает
