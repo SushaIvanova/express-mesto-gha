@@ -37,21 +37,6 @@ module.exports.deleteCardById = (req, res) => {
     .catch(() => res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Внутренняя ошибка сервера' }));
 };
 
-
-// .then((card) => {
-//   if (!card) {
-//     res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({ message: 'Карточка не найдена' });
-//     return;
-//   }
-//   res.status(httpConstants.HTTP_STATUS_OK).send(card);
-// })
-// .catch((error) => {
-//   if (error.name === 'CastError') {
-//     res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: 'Карточка не найдена' });
-//   }
-//   res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Внутренняя ошибка сервера' });
-// });
-
 // работает
 module.exports.likeCard = (req, res) => {
   Card.findByIdAndUpdate(
