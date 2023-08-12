@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const UserModel = require('../models/user');
 const httpConstants = require('../constants/errors');
 
@@ -8,40 +9,38 @@ module.exports.getAllUsers = (req, res) => {
     .catch(() => res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Внутренняя ошибка сервера' }));
 };
 
-// работает
+// работает2
 module.exports.getUserById = (req, res) => {
   const { userId } = req.params;
   return UserModel.findById(userId)
-    .then((user) => {
-      if (!user) {
-        res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: 'Пользователь не найден' });
-      }
-      return res.status(httpConstants.HTTP_STATUS_OK).send(user);
-    })
+    .orFail()
+    .then((user) => res.status(httpConstants.HTTP_STATUS_OK).send(user))
     .catch((error) => {
-      if (error.name === 'CastError') {
+      if (error instanceof mongoose.Error.CastError) {
         res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
           message: 'Некорректный id пользователя',
         });
+      } else if (error instanceof mongoose.Error.DocumentNotFoundError) {
+        res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: 'Пользователь не найден' });
+      } else {
+        res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Внутренняя ошибка сервера' });
       }
-      res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ massage: 'Внутренняя ошибка сервера' });
     });
 };
 
 // работает
 module.exports.createUser = (req, res) => {
   const { name, about, avatar } = req.body;
-  // console.log(req.user._id);
   return UserModel.create({ name, about, avatar })
     .then((user) => res.status(httpConstants.HTTP_STATUS_CREATED).send(user))
     .catch((error) => {
-      if (error.name === 'ValidationError') {
+      if (error instanceof mongoose.Error.ValidationError) {
         res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
           message: 'Некорректный формат данных',
         });
-        return;
+      } else {
+        res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ massage: 'Внутренняя ошибка сервера' });
       }
-      res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ massage: 'Внутренняя ошибка сервера' });
     });
 };
 
@@ -54,7 +53,6 @@ module.exports.editProfile = (req, res) => {
     {
       new: true,
       runValidators: true,
-      upsert: true,
     },
   )
     .then((user) => {
@@ -64,7 +62,7 @@ module.exports.editProfile = (req, res) => {
       res.status(httpConstants.HTTP_STATUS_OK).send(user);
     })
     .catch((error) => {
-      if (error.name === 'ValidationError') {
+      if (error instanceof mongoose.Error.ValidationError) {
         res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
           message: 'Некорректный формат данных',
         });
@@ -82,7 +80,6 @@ module.exports.editAvatar = (req, res) => {
     {
       new: true,
       runValidators: true,
-      upsert: true,
     },
   )
     .then((user) => {
@@ -92,7 +89,7 @@ module.exports.editAvatar = (req, res) => {
       res.status(httpConstants.HTTP_STATUS_OK).send(user);
     })
     .catch((error) => {
-      if (error.name === 'ValidationError') {
+      if (error instanceof mongoose.Error.ValidationError) {
         res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
           message: 'Некорректный формат данных',
         });

@@ -12,14 +12,13 @@
   "author": "Sasha Ivanova",
   "license": "ISC",
   "dependencies": {
-    "body-parser": "^1.20.2",
-    "eslint": "^8.46.0",
-    "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-plugin-import": "^2.28.0",
-    "express": "^4.18.2", 
+    "express": "^4.18.2",
     "mongoose": "^7.4.2"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.1",
+    "eslint": "^8.46.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.28.0"
   }
 }
