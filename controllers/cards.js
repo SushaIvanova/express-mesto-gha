@@ -36,7 +36,7 @@ module.exports.deleteCardById = (req, res) => {
     })
     .catch((error) => {
       if (error === 'ValidationError') {
-        res.status(404).send({ message: 'Некорректный ID' });
+        res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({ message: 'Некорректный ID' });
       }
       res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Внутренняя ошибка сервера' });
     });
