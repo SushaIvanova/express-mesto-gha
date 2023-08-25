@@ -29,12 +29,10 @@ module.exports.createCard = (req, res, next) => {
 module.exports.deleteCardById = (req, res, next) => {
   Card.findById(req.params.cardId)
     .then((card) => {
-      if (!card) {
-        next(new NotFoundError('Карточка не найдена'));
-      } else if (!card.owner.equals(req.user._id)) {
-        next(new ForbiddenError('Нельзя удалить чужую карточку'));
+      if (!card.owner.equals(req.user._id)) {
+        throw new ForbiddenError('Нельзя удалить чужую карточку');
       }
-      Card.findByIdAndRemove(req.params.cardId)
+      Card.deleteOne(card)
         .orFail()
         .then(() => {
           res.status(httpConstants.HTTP_STATUS_OK).send(card);
@@ -48,6 +46,15 @@ module.exports.deleteCardById = (req, res, next) => {
             next(error);
           }
         });
+    })
+    .catch((error) => {
+      if (error instanceof mongoose.Error.CastError) {
+        next(new BadRequestError('Некорректный ID'));
+      } else if (error.name === 'TypeError') {
+        next(new NotFoundError('Карточка не найдена'));
+      } else {
+        next(error);
+      }
     });
 };
 
