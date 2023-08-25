@@ -1,51 +1,76 @@
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const UserModel = require('../models/user');
 const httpConstants = require('../constants/errors');
+const BadRequestError = require('../errors/BadRequestError');
+const NotFoundError = require('../errors/NotFoundError');
+const ConflictError = require('../errors/ConflictError');
+// const getJwt = require('../utils/jwt');
+
+const { JWT_KEY = 'some-secret-key' } = process.env;
 
 // работает
-module.exports.getAllUsers = (req, res) => {
+module.exports.getAllUsers = (req, res, next) => {
   UserModel.find()
     .then((users) => res.status(httpConstants.HTTP_STATUS_OK).send(users))
-    .catch(() => res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Внутренняя ошибка сервера' }));
+    .catch(next);
 };
 
 // работает2
-module.exports.getUserById = (req, res) => {
+module.exports.getUserById = (req, res, next) => {
   const { userId } = req.params;
   return UserModel.findById(userId)
     .orFail()
     .then((user) => res.status(httpConstants.HTTP_STATUS_OK).send(user))
     .catch((error) => {
       if (error instanceof mongoose.Error.CastError) {
-        res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
-          message: 'Некорректный id пользователя',
-        });
+        next(new BadRequestError('Некорректный id пользователя'));
       } else if (error instanceof mongoose.Error.DocumentNotFoundError) {
-        res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: 'Пользователь не найден' });
+        next(new NotFoundError('Пользователь не найден'));
       } else {
-        res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'Внутренняя ошибка сервера' });
+        next(error);
       }
     });
 };
 
 // работает
-module.exports.createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
-  return UserModel.create({ name, about, avatar })
-    .then((user) => res.status(httpConstants.HTTP_STATUS_CREATED).send(user))
-    .catch((error) => {
-      if (error instanceof mongoose.Error.ValidationError) {
-        res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
-          message: 'Некорректный формат данных',
+module.exports.createUser = (req, res, next) => {
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
+  // if (!email || !password) {
+  //   return res.status(400).send({
+  //     message: 'Email и пароль не могут быть пустыми',
+  //   }); /* в ПР использовать celebrate вместо этого */
+  // }
+  bcrypt.hash(password, 10)
+    .then((hash) => UserModel.create({
+      name,
+      about,
+      avatar,
+      email,
+      password: hash,
+    })
+      .then((user) => {
+        // console.log(httpConstants);
+        res.status(httpConstants.HTTP_STATUS_CREATED).send({
+          name: user.name, about: user.about, avatar: user.avatar, email: user.email, _id: user._id,
         });
-      } else {
-        res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ massage: 'Внутренняя ошибка сервера' });
-      }
-    });
+      })
+      .catch((error) => {
+        if (error.code === 11000) {
+          next(new ConflictError('Такой пользователь уже существует'));
+        } else if (error instanceof mongoose.Error.ValidationError) {
+          next(new BadRequestError('Некорректный формат данных'));
+        } else {
+          next(error);
+        }
+      }));
 };
 
 // работает
-module.exports.editProfile = (req, res) => {
+module.exports.editProfile = (req, res, next) => {
   const { name, about } = req.body;
   return UserModel.findByIdAndUpdate(
     req.user._id,
@@ -57,22 +82,20 @@ module.exports.editProfile = (req, res) => {
   )
     .then((user) => {
       if (!user) {
-        res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: 'Пользователь не найден' });
+        next(new NotFoundError('Пользователь не найден'));
       }
       res.status(httpConstants.HTTP_STATUS_OK).send(user);
     })
     .catch((error) => {
       if (error instanceof mongoose.Error.ValidationError) {
-        res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
-          message: 'Некорректный формат данных',
-        });
+        next(new BadRequestError('Некорректный формат данных'));
         return;
       }
-      res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ massage: 'Внутренняя ошибка сервера' });
+      next(error);
     });
 };
 
-module.exports.editAvatar = (req, res) => {
+module.exports.editAvatar = (req, res, next) => {
   const { avatar } = req.body;
   return UserModel.findByIdAndUpdate(
     req.user._id,
@@ -84,17 +107,38 @@ module.exports.editAvatar = (req, res) => {
   )
     .then((user) => {
       if (!user) {
-        res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: 'Пользователь не найден' });
+        next(new NotFoundError('Пользователь не найден'));
       }
       res.status(httpConstants.HTTP_STATUS_OK).send(user);
     })
     .catch((error) => {
       if (error instanceof mongoose.Error.ValidationError) {
-        res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({
-          message: 'Некорректный формат данных',
-        });
+        next(new BadRequestError('Некорректный формат данных'));
         return;
       }
-      res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ massage: 'Внутренняя ошибка сервера' });
+      next(error);
     });
+};
+
+module.exports.login = (req, res, next) => {
+  const { email, password } = req.body;
+  // if (!email || !password) {
+  //   return res.status(400).send({
+  //     message: 'Email и пароль не могут быть пустыми',
+  //   }); /* в ПР использовать celebrate вместо этого */
+  // }
+  return UserModel.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, JWT_KEY, { expiresIn: '7d' });
+      res.send({ token });
+    })
+    .catch((err) => {
+      next(err);
+    });
+};
+
+module.exports.getCurrentUser = (req, res, next) => {
+  UserModel.findById(req.user._id)
+    .then((user) => res.status(httpConstants.HTTP_STATUS_OK).send(user))
+    .catch(next);
 };

@@ -1,5 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const { errors } = require('celebrate');
 const httpConstants = require('./constants/errors');
 
 const { PORT = 3000 } = process.env;
@@ -13,20 +14,26 @@ mongoose.connect('mongodb://127.0.0.1:27017/mestodb', {
 });
 
 app.use(express.json());
-// app.use(bodyParser.urlencoded({ extended: true }));
-
-app.use((req, res, next) => { /* временная авторизация */
-  req.user = {
-    _id: '64d4be17de9a259e33775bf6',
-  };
-
-  next();
-});
 
 app.use(router);
 
 app.use('*', (req, res) => {
   res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: 'Страница не найдена' });
+});
+
+app.use(errors());
+
+app.use((err, req, res, next) => {
+  const { statusCode = 500, message } = err;
+
+  res
+    .status(statusCode)
+    .send({
+      message: statusCode === 500
+        ? 'На сервере произошла ошибка'
+        : message,
+    });
+  next();
 });
 
 // Запуск сервера
