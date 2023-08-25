@@ -6,18 +6,15 @@ const httpConstants = require('../constants/errors');
 const BadRequestError = require('../errors/BadRequestError');
 const NotFoundError = require('../errors/NotFoundError');
 const ConflictError = require('../errors/ConflictError');
-// const getJwt = require('../utils/jwt');
 
 const { JWT_KEY = 'some-secret-key' } = process.env;
 
-// работает
 module.exports.getAllUsers = (req, res, next) => {
   UserModel.find()
     .then((users) => res.status(httpConstants.HTTP_STATUS_OK).send(users))
     .catch(next);
 };
 
-// работает2
 module.exports.getUserById = (req, res, next) => {
   const { userId } = req.params;
   return UserModel.findById(userId)
@@ -34,16 +31,10 @@ module.exports.getUserById = (req, res, next) => {
     });
 };
 
-// работает
 module.exports.createUser = (req, res, next) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
-  // if (!email || !password) {
-  //   return res.status(400).send({
-  //     message: 'Email и пароль не могут быть пустыми',
-  //   }); /* в ПР использовать celebrate вместо этого */
-  // }
   bcrypt.hash(password, 10)
     .then((hash) => UserModel.create({
       name,
@@ -53,7 +44,6 @@ module.exports.createUser = (req, res, next) => {
       password: hash,
     })
       .then((user) => {
-        // console.log(httpConstants);
         res.status(httpConstants.HTTP_STATUS_CREATED).send({
           name: user.name, about: user.about, avatar: user.avatar, email: user.email, _id: user._id,
         });
@@ -69,7 +59,6 @@ module.exports.createUser = (req, res, next) => {
       }));
 };
 
-// работает
 module.exports.editProfile = (req, res, next) => {
   const { name, about } = req.body;
   return UserModel.findByIdAndUpdate(
@@ -122,11 +111,6 @@ module.exports.editAvatar = (req, res, next) => {
 
 module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
-  // if (!email || !password) {
-  //   return res.status(400).send({
-  //     message: 'Email и пароль не могут быть пустыми',
-  //   }); /* в ПР использовать celebrate вместо этого */
-  // }
   return UserModel.findUserByCredentials(email, password)
     .then((user) => {
       const token = jwt.sign({ _id: user._id }, JWT_KEY, { expiresIn: '7d' });

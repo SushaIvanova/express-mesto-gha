@@ -36,5 +36,4 @@ app.use((err, req, res, next) => {
   next();
 });
 
-// Запуск сервера
 app.listen(PORT);

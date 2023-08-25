@@ -12,7 +12,6 @@ module.exports.getAllCards = (req, res, next) => {
     .catch(next);
 };
 
-// работает
 module.exports.createCard = (req, res, next) => {
   const { name, link } = req.body;
   return Card.create({ name, link, owner: req.user._id })
@@ -25,7 +24,6 @@ module.exports.createCard = (req, res, next) => {
     });
 };
 
-// работает
 module.exports.deleteCardById = (req, res, next) => {
   Card.findById(req.params.cardId)
     .then((card) => {
@@ -58,11 +56,10 @@ module.exports.deleteCardById = (req, res, next) => {
     });
 };
 
-// работает
 module.exports.likeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
-    { $addToSet: { likes: req.user._id } }, // добавить _id в массив, если его там нет
+    { $addToSet: { likes: req.user._id } },
     { new: true },
   )
     .orFail()
@@ -78,11 +75,10 @@ module.exports.likeCard = (req, res, next) => {
     });
 };
 
-// работает
 module.exports.dislikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
-    { $pull: { likes: req.user._id } }, // убрать _id из массива
+    { $pull: { likes: req.user._id } },
     { new: true },
   )
     .orFail()
