@@ -71,16 +71,16 @@ module.exports.editProfile = (req, res, next) => {
   )
     .then((user) => {
       if (!user) {
-        next(new NotFoundError('Пользователь не найден'));
+        throw new NotFoundError('Пользователь не найден');
       }
       res.status(httpConstants.HTTP_STATUS_OK).send(user);
     })
     .catch((error) => {
       if (error instanceof mongoose.Error.ValidationError) {
         next(new BadRequestError('Некорректный формат данных'));
-        return;
+      } else {
+        next(error);
       }
-      next(error);
     });
 };
 
@@ -96,16 +96,16 @@ module.exports.editAvatar = (req, res, next) => {
   )
     .then((user) => {
       if (!user) {
-        next(new NotFoundError('Пользователь не найден'));
+        throw new NotFoundError('Пользователь не найден');
       }
       res.status(httpConstants.HTTP_STATUS_OK).send(user);
     })
     .catch((error) => {
       if (error instanceof mongoose.Error.ValidationError) {
         next(new BadRequestError('Некорректный формат данных'));
-        return;
+      } else {
+        next(error);
       }
-      next(error);
     });
 };
 

@@ -1,7 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const { errors } = require('celebrate');
-const httpConstants = require('./constants/errors');
+const NotFoundError = require('./errors/NotFoundError');
+const errorHandler = require('./middlewares/errorHandler');
 
 const { PORT = 3000 } = process.env;
 
@@ -17,23 +18,12 @@ app.use(express.json());
 
 app.use(router);
 
-app.use('*', (req, res) => {
-  res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: 'Страница не найдена' });
+app.use('*', (req, res, next) => {
+  next(new NotFoundError('Страница не найдена'));
 });
 
 app.use(errors());
 
-app.use((err, req, res, next) => {
-  const { statusCode = 500, message } = err;
-
-  res
-    .status(statusCode)
-    .send({
-      message: statusCode === 500
-        ? 'На сервере произошла ошибка'
-        : message,
-    });
-  next();
-});
+app.use(errorHandler);
 
 app.listen(PORT);

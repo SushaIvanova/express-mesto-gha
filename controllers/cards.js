@@ -19,15 +19,18 @@ module.exports.createCard = (req, res, next) => {
     .catch((error) => {
       if (error instanceof mongoose.Error.ValidationError) {
         next(new BadRequestError('Некорректный формат данных'));
+      } else {
+        next(error);
       }
-      next(error);
     });
 };
 
 module.exports.deleteCardById = (req, res, next) => {
   Card.findById(req.params.cardId)
     .then((card) => {
-      if (!card.owner.equals(req.user._id)) {
+      if (!card) {
+        throw new NotFoundError('Карточка не найдена');
+      } else if (!card.owner.equals(req.user._id)) {
         throw new ForbiddenError('Нельзя удалить чужую карточку');
       }
       Card.deleteOne(card)
@@ -36,9 +39,7 @@ module.exports.deleteCardById = (req, res, next) => {
           res.status(httpConstants.HTTP_STATUS_OK).send(card);
         })
         .catch((error) => {
-          if (error instanceof mongoose.Error.CastError) {
-            next(new BadRequestError('Некорректный ID'));
-          } else if (error instanceof mongoose.Error.DocumentNotFoundError) {
+          if (error instanceof mongoose.Error.DocumentNotFoundError) {
             next(new NotFoundError('Карточка не найдена'));
           } else {
             next(error);
