@@ -49,7 +49,7 @@ module.exports.deleteCardById = (req, res, next) => {
     .catch((error) => {
       if (error instanceof mongoose.Error.CastError) {
         next(new BadRequestError('Некорректный ID'));
-      } else if (error.name === 'TypeError') {
+      } else if (error instanceof mongoose.Error.DocumentNotFoundError) {
         next(new NotFoundError('Карточка не найдена'));
       } else {
         next(error);
